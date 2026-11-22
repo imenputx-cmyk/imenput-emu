@@ -1,7 +1,11 @@
 // SPDX-FileCopyrightText: Copyright 2026 Eden Emulator Project
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include <algorithm>
+#include <cctype>
+#include <filesystem>
 #include <optional>
+#include <vector>
 #include <array>
 #include <cstdlib>
 #include <chrono>
@@ -103,6 +107,61 @@ void RecordGuestPresent() {
                                .count();
     g_nx2_present_times_ns[present % g_nx2_present_times_ns.size()].store(
         present_ns, std::memory_order_relaxed);
+}
+
+std::string ResolveGamePath(const std::string& path, int max_depth) {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    const fs::path root{Common::FS::ToU8String(path)};
+    if (!fs::is_directory(root, ec)) {
+        return path;
+    }
+    const auto to_string = [](const fs::path& p) { return Common::FS::PathToUTF8String(p); };
+    const auto is_container = [](const fs::path& p) {
+        auto ext = Common::FS::PathToUTF8String(p.extension());
+        std::ranges::transform(ext, ext.begin(),
+                               [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        return ext == ".nsp" || ext == ".xci" || ext == ".nsz" || ext == ".xcz" || ext == ".nca";
+    };
+
+    // Breadth first, so the shallowest match wins.
+    std::vector<fs::path> level{root};
+    for (int depth = 0; depth <= max_depth && !level.empty(); ++depth) {
+        std::vector<fs::path> next;
+        fs::path exefs_dir;
+        fs::path game_dir;
+        fs::path best_container;
+        std::uintmax_t best_size = 0;
+        for (const auto& dir : level) {
+            if (fs::is_regular_file(dir / "main", ec) && exefs_dir.empty()) {
+                exefs_dir = dir;
+            }
+            if (fs::is_regular_file(dir / "exefs" / "main", ec) && game_dir.empty()) {
+                game_dir = dir / "exefs";
+            }
+            for (const auto& entry : fs::directory_iterator(dir, ec)) {
+                if (entry.is_directory(ec)) {
+                    next.push_back(entry.path());
+                } else if (entry.is_regular_file(ec) && is_container(entry.path())) {
+                    const auto size = entry.file_size(ec);
+                    if (best_container.empty() || size > best_size) {
+                        best_container = entry.path();
+                        best_size = size;
+                    }
+                }
+            }
+        }
+        for (const auto* found : {&exefs_dir, &game_dir, &best_container}) {
+            if (!found->empty()) {
+                const std::string result = to_string(*found);
+                LOG_INFO(Core, "'{}' is a folder: loading '{}'", path, result);
+                return result;
+            }
+        }
+        level = std::move(next);
+    }
+    LOG_WARNING(Core, "'{}' is a folder with no ExeFS, NSP, XCI, NSZ, XCZ or NCA inside", path);
+    return path;
 }
 
 FileSys::VirtualFile GetGameFileFromPath(const FileSys::VirtualFilesystem& vfs,

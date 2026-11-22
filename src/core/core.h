@@ -140,6 +140,15 @@ struct PerfStatsResults;
 FileSys::VirtualFile GetGameFileFromPath(const FileSys::VirtualFilesystem& vfs,
                                          const std::string& path);
 
+/**
+ * Works out what to load from a path the user gave. A file is used as it is. A directory is
+ * searched (up to `max_depth` levels down) for, in order: an ExeFS (a folder holding `main`), a
+ * game folder holding `exefs/main`, then game containers (.nsp .xci .nsz .xcz .nca; the largest
+ * wins, which is the base game rather than an update or DLC). Returns the path unchanged when
+ * nothing is found.
+ */
+std::string ResolveGamePath(const std::string& path, int max_depth = 3);
+
 /// The id of the Switch 2 program in a game file, or nothing for any other program.
 std::optional<u64> FindSwitch2Program(const FileSys::VirtualFile& file, u64 program_id,
                                       std::size_t program_index);

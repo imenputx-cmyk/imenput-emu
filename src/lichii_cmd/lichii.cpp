@@ -627,6 +627,9 @@ extern "C" SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         return SDL_APP_FAILURE;
     }
 
+    // A folder is accepted: find the ExeFS or the game container inside it.
+    lp.filepath = Core::ResolveGamePath(lp.filepath);
+
     state->network_initialized = Network::Init();
     if (!state->network_initialized) {
         LOG_CRITICAL(Network, "Failed to initialize room networking");

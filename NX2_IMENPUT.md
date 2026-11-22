@@ -17,3 +17,4 @@ See `NX2_NOTES.md` "Setup". Short form, from a VS "x64 Native Tools" prompt in a
 
 ## Log
 - 2026-11-22: imported Lichii; first target Donkey Kong Bananza (black screen).
+- 2026-11-22: `Core::ResolveGamePath` (core.cpp): a folder given on the command line is searched (3 levels) for an ExeFS (`main`), `exefs/main`, then the largest .nsp/.xci/.nsz/.xcz/.nca. Files are used as they are.
