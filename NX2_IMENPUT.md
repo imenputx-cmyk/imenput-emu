@@ -19,3 +19,4 @@ See `NX2_NOTES.md` "Setup". Short form, from a VS "x64 Native Tools" prompt in a
 - 2026-11-22: imported Lichii; first target Donkey Kong Bananza (black screen).
 - 2026-11-22: `Core::ResolveGamePath` (core.cpp): a folder given on the command line is searched (3 levels) for an ExeFS (`main`), `exefs/main`, then the largest .nsp/.xci/.nsz/.xcz/.nca. Files are used as they are.
 - 2026-11-22: Console Mode (`src/lichii/game/console_home.{h,cpp}`): full-screen home screen, one row of big game tiles, A/B/D-pad/left stick via `ControllerNavigation`, keyboard and mouse too. View menu > Console Mode (F10). After a game started from it stops, the screen comes back. Original look, no console-maker assets.
+- 2026-11-22: `release-binaries.yml` gets a `windows_only` input (default true): Actions > release-binaries > Run workflow builds just the Windows zip and publishes it as a GitHub release (tag `build-N`).
