@@ -175,6 +175,7 @@ add_executable(lichii
 
     game/game_tree.h game/game_tree.cpp
     game/game_card.h game/game_card.cpp
+    game/console_home.h game/console_home.cpp
     game/search_field.h game/search_field.cpp
 
     hotkeys.cpp

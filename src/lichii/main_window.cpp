@@ -73,6 +73,7 @@
 
 #include "util/clickable_label.h"
 #include "util/controller_navigation.h"
+#include "lichii/game/console_home.h"
 #include "util/overlay_dialog.h"
 
 #include "multiplayer/state.h"
@@ -1860,6 +1861,16 @@ void MainWindow::ConnectMenuEvents() {
     connect_menu(ui->action_Tree_View, &MainWindow::SetTreeView);
     connect_menu(ui->action_Carousel_View, &MainWindow::SetCarouselView);
 
+    // Console mode: a full-screen, gamepad-driven home screen (F10).
+    {
+        auto* console_action = new QAction(tr("Console Mode"), this);
+        console_action->setShortcut(QKeySequence(Qt::Key_F10));
+        console_action->setShortcutContext(Qt::WindowShortcut);
+        ui->menu_View->insertAction(ui->action_Carousel_View, console_action);
+        connect(console_action, &QAction::triggered, this, &MainWindow::OpenConsoleMode);
+        addAction(console_action);
+    }
+
     game_size_actions = new QActionGroup(this);
     game_size_actions->setExclusive(true);
 
@@ -3011,6 +3022,11 @@ void MainWindow::OnEmulationStopped() {
     } else if (!boot_in_progress) {
         game_list->SetScanEnabled(true);
         game_list->PopulateAsync(UISettings::values.game_dirs);
+        if (console_mode_return) {
+            // Back to the home screen after a game started from it.
+            console_mode_return = false;
+            QTimer::singleShot(500, this, &MainWindow::OpenConsoleMode);
+        }
     }
 }
 
@@ -4282,6 +4298,20 @@ void MainWindow::SetTreeView() {
 
 void MainWindow::SetCarouselView() {
     SetGameListMode(Settings::GameListMode::CarouselView);
+}
+
+void MainWindow::OpenConsoleMode() {
+    if (emulation_running || game_list == nullptr) {
+        return;
+    }
+    auto* home = new ConsoleHome(*QtCommon::system, game_list->ConsoleModel(), this);
+    connect(home, &ConsoleHome::GameActivated, this, [this](const QModelIndex& index) {
+        console_mode_return = true;
+        game_list->LaunchEntry(index);
+    });
+    home->showFullScreen();
+    home->setFocus();
+    home->activateWindow();
 }
 
 void MainWindow::CheckIconSize() {

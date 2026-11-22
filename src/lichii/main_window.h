@@ -450,6 +450,7 @@ private slots:
     void SetGridView();
     void SetTreeView();
     void SetCarouselView();
+    void OpenConsoleMode();
 
     void CheckIconSize();
     void ToggleShowGameName();
@@ -570,6 +571,8 @@ private:
 
     GRenderWindow* render_window = nullptr;
     GameList* game_list = nullptr;
+    /// The game was started from the console mode screen: come back to it when it stops.
+    bool console_mode_return = false;
     LoadingScreen* loading_screen = nullptr;
     QTimer shutdown_timer;
     QTimer emu_terminate_timer;

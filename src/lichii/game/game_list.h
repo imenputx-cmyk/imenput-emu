@@ -89,6 +89,10 @@ public:
 
     QStandardItemModel* GetModel() const;
 
+    /// The list's model (for the console mode screen) and a way to start one of its games.
+    GameListModel* ConsoleModel() const { return item_model; }
+    void LaunchEntry(const QModelIndex& index) { ValidateEntry(index); }
+
     /// Disables events from the emulated controller
     void UnloadController();
 
